@@ -1,0 +1,99 @@
+[project]
+name = "fastapi-production-starter"
+version = "0.1.0"
+description = "Reference-quality multi-tenant Task Board API built with FastAPI, SQLAlchemy 2.0 async, and Postgres."
+authors = [{ name = "Gaurav Niturkar", email = "gaurav@cloud9space.com" }]
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.32,<1.0",
+    "pydantic>=2.9,<3.0",
+    "pydantic-settings>=2.6,<3.0",
+    "sqlalchemy[asyncio]>=2.0.36,<3.0",
+    "asyncpg>=0.30,<1.0",
+    "alembic>=1.14,<2.0",
+    "pyjwt>=2.10,<3.0",
+    "passlib[argon2]>=1.7.4,<2.0",
+    "argon2-cffi>=23.1,<24.0",
+    "redis>=5.2,<6.0",
+    "structlog>=24.4,<25.0",
+    "prometheus-fastapi-instrumentator>=8.1,<9.0",
+    "python-multipart>=0.0.17,<1.0",
+    "email-validator>=2.2,<3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "pytest-cov>=6.0,<7.0",
+    "httpx>=0.27,<1.0",
+    "testcontainers[postgres]>=4.9,<5.0",
+    "faker>=33.0,<34.0",
+    "factory-boy>=3.3,<4.0",
+    "ruff>=0.8,<1.0",
+    "mypy>=1.13,<2.0",
+    "pre-commit>=4.0,<5.0",
+    "types-passlib>=1.7,<2.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I", "UP", "B", "SIM", "C4", "PIE", "PL", "RUF", "N", "ASYNC",
+]
+ignore = ["PLR0913", "PLR0917", "PLR2004", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+files = ["app"]
+
+[[tool.mypy.overrides]]
+module = ["testcontainers.*", "passlib.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    # passlib 1.7.4 unconditionally probes the stdlib `crypt` module (deprecated
+    # in 3.12, removed in 3.13) even though we only use its argon2 backend.
+    "ignore:'crypt' is deprecated:DeprecationWarning:passlib.utils",
+    # passlib's argon2 backend reads argon2_cffi's __version__ attribute in a
+    # way that attribute itself now warns about; harmless version probing.
+    "ignore:Accessing argon2.__version__ is deprecated:DeprecationWarning:passlib.handlers.argon2",
+]
+markers = [
+    "unit: fast, no external dependencies",
+    "integration: hits a real Postgres/Redis via testcontainers",
+    "e2e: full API lifecycle tests",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = ["app/db/alembic/*"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
